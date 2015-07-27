@@ -1,0 +1,49 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1348\cocoasubrtf170
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww25100\viewh17240\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 Query 1:\
+ \
+SELECT (Emp_f_name) || " " || (Emp_m_name) || " " || (Emp_l_name) AS FullName, Emp_DOB \
+FROM t_emp \
+where date(Emp_DOB)=date(Emp_DOB,'start of month','+1 month','-1 day');\
+\
+Query 2: \
+\
+\
+SELECT \
+\
+(SELECT (Emp_f_name || ' ' || Emp_m_name || ' ' || Emp_L_name) FROM t_emp WHERE t_emp.Emp_id=hours.Emp_id) AS Name,\
+\
+salary.[GotIncrement?] AS [Increment?],salary.PreviousSalary AS Previous_Salary,\
+\
+salary.CurrentSalary AS CurrentSalary,hours.TotalWorkedHours AS Total_Worked_Hours,\
+\
+hours.LastWorkedActivity AS LastWorkedActivity,hours.HoursWorkedInLastActivity AS Hours_Worked_In_Last_Activity\
+\
+FROM\
+\
+(SELECT Emp_id,SUM(Atten_end_hrs) AS TotalWorkedHours,\
+Atten_end_hrs AS HoursWorkedInLastActivity,\
+Activity_description AS LastWorkedActivity FROM t_atten_det ad \
+INNER JOIN t_activity a \
+ON ad.Activity_id=a.Activity_id \
+GROUP BY Emp_id HAVING MAX(Atten_start_datetime)) hours\
+\
+INNER JOIN\
+\
+(SELECT us.Emp_id, us.CurrentSalary,us.PreviousSalary,(CASE WHEN us.CurrentSalary>us.PreviousSalary THEN 'YES' ELSE 'NO' END) AS [GotIncrement?] FROM\
+\
+(SELECT tmp.Emp_id , tmp.CurrentSalary,(SELECT t_salary.New_Salary FROM t_salary WHERE tmp.PreviousDate=t_salary.Changed_date) as PreviousSalary FROM\
+\
+(SELECT Emp_id,New_Salary AS CurrentSalary,(SELECT MAX(Changed_date) FROM t_salary WHERE sal.Emp_id=t_salary.Emp_id AND Changed_date NOT IN (SELECT MAX(Changed_date) FROM t_salary)) AS PreviousDate \
+\
+FROM t_salary sal GROUP BY Emp_id HAVING MAX(Changed_date)) tmp) us) salary\
+ON\
+hours.Emp_id=salary.Emp_id;\
+\
+\
+\
+}
